@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DEMO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #e8eef7;
+      --bg-mesh-1: rgba(99, 102, 241, 0.12);
+      --bg-mesh-2: rgba(14, 165, 233, 0.1);
+      --bg-mesh-3: rgba(244, 114, 182, 0.08);
+      --surface: rgba(255, 255, 255, 0.72);
+      --surface-solid: #ffffff;
+      --border: rgba(148, 163, 184, 0.35);
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --accent: #0ea5e9;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 24px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-hover: 0 12px 40px rgba(15, 23, 42, 0.1);
+      --mono-bg: #0c1222;
+      --mono-fg: #cbd5e1;
+    }
+
+    [data-theme="dark"] {
+      --bg-base: #0b1120;
+      --bg-mesh-1: rgba(99, 102, 241, 0.18);
+      --bg-mesh-2: rgba(14, 165, 233, 0.12);
+      --bg-mesh-3: rgba(244, 114, 182, 0.1);
+      --surface: rgba(30, 41, 59, 0.65);
+      --surface-solid: #1e293b;
+      --border: rgba(148, 163, 184, 0.2);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --primary: #818cf8;
+      --primary-hover: #a5b4fc;
+      --accent: #38bdf8;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.45);
+      --mono-bg: #020617;
+      --mono-fg: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(900px 500px at 10% -10%, var(--bg-mesh-1), transparent 55%),
+        radial-gradient(700px 400px at 90% 0%, var(--bg-mesh-2), transparent 50%),
+        radial-gradient(600px 400px at 50% 100%, var(--bg-mesh-3), transparent 45%);
+      background-attachment: fixed;
+      transition: background-color 0.35s ease, color 0.2s ease;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .layout {
+      display: grid;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (min-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr minmax(320px, 400px);
+      }
+    }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      max-width: 520px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.98);
+    }
+
+    .panels {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.25s ease, border-color 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
+    }
+
+    .card-dot.auth { background: #6366f1; color: #6366f1; }
+    .card-dot.cat { background: #0ea5e9; color: #0ea5e9; }
+    .card-dot.prod { background: #10b981; color: #10b981; }
+    .card-dot.res { background: #f59e0b; color: #f59e0b; }
+    .card-dot.up { background: #ec4899; color: #ec4899; }
+    .card-dot.out { background: #8b5cf6; color: #8b5cf6; }
+
+    .card h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .card .hint {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .auth-block-label {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin: 10px 0 2px;
+    }
+
+    .auth-block-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    input,
+    button {
+      height: 42px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input {
+      padding: 0 14px;
+      background: var(--surface-solid);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input::placeholder {
+      color: var(--muted);
+      opacity: 0.85;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+
+    input[type="file"] {
+      height: auto;
+      min-height: 42px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 0 16px;
+      cursor: pointer;
+      background: var(--surface-solid);
+      color: var(--text);
+      font-weight: 600;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s, color 0.2s;
+    }
+
+    button:hover {
+      border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+      background: color-mix(in srgb, var(--primary) 6%, var(--surface-solid));
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--accent) 55%, var(--primary)));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.06);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .output-aside .card {
+      position: sticky;
+      top: 20px;
+    }
+
+    .output-aside .card-head {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+
+    pre {
+      margin: 0;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      background: var(--mono-bg);
+      color: var(--mono-fg);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      max-height: min(52vh, 480px);
+      overflow: auto;
+      border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    }
+
+    @media (max-width: 1023px) {
+      pre {
+        max-height: 320px;
+      }
+    }
+
+    pre::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--muted) 45%, transparent);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="layout">
+      <div class="main-col">
+        <header class="top">
+          <div class="brand">
+            <div class="brand-mark" aria-hidden="true">API</div>
+            <div>
+              <h1>NNPTUD — API Playground</h1>
+              <p class="subtitle">Gọi thử endpoint nhanh: đăng nhập, category, product, reservation và upload — kết quả hiển thị bên phải (trên màn hình lớn).</p>
+            </div>
+          </div>
+          <button type="button" class="theme-toggle" id="themeBtn" aria-label="Đổi giao diện sáng tối">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Tối</span>
+          </button>
+        </header>
+
+        <div class="panels">
+          <section class="card" aria-labelledby="h-auth">
+            <div class="card-head">
+              <span class="card-dot auth" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-auth">Authentication</h2>
+                <p class="hint">Đăng ký tạo user + giỏ hàng. Đăng nhập để lưu JWT trong trang.</p>
+              </div>
+            </div>
+            <div class="row">
+              <span class="auth-block-label">Đăng nhập</span>
+              <input id="username" placeholder="Username" autocomplete="username" />
+              <input id="password" placeholder="Password" type="password" autocomplete="current-password" />
+              <button type="button" class="btn-primary" onclick="login()">Đăng nhập</button>
+              <button type="button" onclick="me()">Me</button>
+            </div>
+            <div class="row">
+              <span class="auth-block-label">Đăng ký</span>
+              <input id="regUsername" placeholder="Username (chỉ chữ và số)" autocomplete="off" />
+              <input id="regEmail" type="email" placeholder="Email" autocomplete="email" />
+              <input id="regPassword" type="password" placeholder="Mật khẩu mạnh (≥8, HOA, thường, số, ký tự đặc biệt)" autocomplete="new-password" />
+              <button type="button" class="btn-primary" onclick="register()">Đăng ký</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="h-cat">
+            <div class="card-head">
+              <span class="card-dot cat" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-cat">Category</h2>
+                <p class="hint">Tạo danh mục hoặc liệt kê toàn bộ.</p>
+              </div>
+            </div>
+            <div class="row">
+              <input id="catName" placeholder="Tên category" />
+              <button type="button" class="btn-primary" onclick="createCategory()">Tạo category</button>
+              <button type="button" onclick="listCategories()">Danh sách</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="h-prod">
+            <div class="card-head">
+              <span class="card-dot prod" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-prod">Product</h2>
+                <p class="hint">SKU, title, price và categoryId (ObjectId).</p>
+              </div>
+            </div>
+            <div class="row">
+              <input id="productTitle" placeholder="Product title" />
+              <input id="productSku" placeholder="SKU" />
+              <input id="productPrice" placeholder="Price" inputmode="decimal" />
+              <input id="productCategory" placeholder="categoryId" />
+              <button type="button" class="btn-primary" onclick="createProduct()">Tạo product</button>
+              <button type="button" onclick="listProducts()">Danh sách</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="h-res">
+            <div class="card-head">
+              <span class="card-dot res" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-res">Reservation</h2>
+                <p class="hint">Tạo từ giỏ hàng hiện tại hoặc xem danh sách.</p>
+              </div>
+            </div>
+            <div class="row">
+              <button type="button" class="btn-primary" onclick="createReservation()">Tạo reservation (từ cart)</button>
+              <button type="button" onclick="listReservations()">Danh sách reservation</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="h-up">
+            <div class="card-head">
+              <span class="card-dot up" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-up">Upload</h2>
+                <p class="hint">Gửi một file ảnh lên server (cần token nếu API yêu cầu).</p>
+              </div>
+            </div>
+            <div class="row">
+              <input id="uploadFile" type="file" accept="image/*" />
+              <button type="button" class="btn-primary" onclick="uploadOneImage()">Upload ảnh</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="output-aside" aria-label="Kết quả API">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-dot out" aria-hidden="true"></span>
+            <div>
+              <h2>Response</h2>
+              <p class="hint">JSON hoặc text thô từ server.</p>
+            </div>
+          </div>
+          <pre id="output">Ready.</pre>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    (function themeInit() {
+      const root = document.documentElement;
+      const saved = localStorage.getItem('api-demo-theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.setAttribute('data-theme', 'dark');
+      }
+      function syncBtn() {
+        const dark = root.getAttribute('data-theme') === 'dark';
+        document.getElementById('themeIcon').textContent = dark ? '☀️' : '🌙';
+        document.getElementById('themeLabel').textContent = dark ? 'Sáng' : 'Tối';
+      }
+      syncBtn();
+      document.getElementById('themeBtn').addEventListener('click', function () {
+        const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        if (next === 'dark') {
+          root.setAttribute('data-theme', 'dark');
+          localStorage.setItem('api-demo-theme', 'dark');
+        } else {
+          root.removeAttribute('data-theme');
+          localStorage.setItem('api-demo-theme', 'light');
+        }
+        syncBtn();
+      });
+    })();
+
+    const base = '/api/v1';
+    let token = '';
+
+    function log(data) {
+      document.getElementById('output').textContent =
+        typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    async function request(url, options = {}) {
+      const headers = options.headers || {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(url, { ...options, headers });
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const data = await request(`${base}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (typeof data === 'string' && data.length > 20) token = data;
+      log({ token, data });
+    }
+
+    async function register() {
+      const username = document.getElementById('regUsername').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const data = await request(`${base}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email })
+      });
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.user) {
+        document.getElementById('username').value = username;
+      }
+      log(data);
+    }
+
+    async function me() {
+      log(await request(`${base}/auth/me`));
+    }
+
+    async function createCategory() {
+      const name = document.getElementById('catName').value;
+      log(await request(`${base}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      }));
+    }
+
+    async function listCategories() {
+      log(await request(`${base}/categories`));
+    }
+
+    async function createProduct() {
+      const title = document.getElementById('productTitle').value;
+      const sku = document.getElementById('productSku').value;
+      const price = Number(document.getElementById('productPrice').value || 0);
+      const category = document.getElementById('productCategory').value;
+      log(await request(`${base}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, sku, price, category, description: title })
+      }));
+    }
+
+    async function listProducts() {
+      log(await request(`${base}/products`));
+    }
+
+    async function createReservation() {
+      log(await request(`${base}/reservation`, { method: 'POST' }));
+    }
+
+    async function listReservations() {
+      log(await request(`${base}/reservation`));
+    }
+
+    async function uploadOneImage() {
+      const fileInput = document.getElementById('uploadFile');
+      if (!fileInput.files.length) return log('Choose file first');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(`${base}/upload/one_image`, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+      log(await response.json());
+    }
+  </script>
+</body>
+</html>
