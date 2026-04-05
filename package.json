@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon ./bin/www",
+    "seed": "node seedAdmin.js",
+    "seed:catalog": "node seedDemoCatalog.js",
+    "seed:all": "node seedAdmin.js && node seedDemoCatalog.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -4,11 +4,18 @@ let cartModel = require('../schemas/carts')
 let { CheckLogin } = require('../utils/authHandler')
 let inventoryModel = require('../schemas/inventories')
 
+async function getOrCreateCart(userId) {
+    let cart = await cartModel.findOne({ user: userId })
+    if (!cart) {
+        cart = new cartModel({ user: userId, items: [] })
+        await cart.save()
+    }
+    return cart
+}
+
 router.get('/', CheckLogin, async function (req, res, next) {
     let user = req.user;
-    let cart = await cartModel.findOne({
-        user: user._id
-    })
+    let cart = await getOrCreateCart(user._id)
     res.send(cart.items)
 })
 router.post('/add', CheckLogin, async function (req, res, next) {
@@ -21,9 +28,7 @@ router.post('/add', CheckLogin, async function (req, res, next) {
         return;
     }
     let user = req.user;
-    let cart = await cartModel.findOne({
-        user: user._id
-    })
+    let cart = await getOrCreateCart(user._id)
     let index = cart.items.findIndex(
         function (e) {
             return e.product == product
@@ -61,9 +66,7 @@ router.post('/remove', CheckLogin, async function (req, res, next) {
         return;
     }
     let user = req.user;
-    let cart = await cartModel.findOne({
-        user: user._id
-    })
+    let cart = await getOrCreateCart(user._id)
     let index = cart.items.findIndex(
         function (e) {
             return e.product == product

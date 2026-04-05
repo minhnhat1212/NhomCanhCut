@@ -5,6 +5,7 @@ let reservationModel = require('../schemas/reservation')
 let cartModel = require('../schemas/carts')
 let inventoryModel = require('../schemas/inventories')
 let { CheckLogin, checkRole } = require('../utils/authHandler')
+let { supportsMongoTransactions, withSession } = require('../utils/mongoSession')
 
 router.get("/", CheckLogin, async function (req, res, next) {
     let query = { user: req.user._id };
@@ -35,24 +36,36 @@ router.get("/:id", CheckLogin, async function (req, res, next) {
 });
 
 router.post("/", CheckLogin, async function (req, res, next) {
-    let session = await mongoose.startSession();
-    session.startTransaction();
+    let session = null;
+    let useTx = false;
     try {
-        let cart = await cartModel.findOne({ user: req.user._id }).session(session).populate('items.product');
+        useTx = await supportsMongoTransactions();
+        if (useTx) {
+            session = await mongoose.startSession();
+            session.startTransaction();
+        }
+        let cart = await withSession(
+            cartModel.findOne({ user: req.user._id }).populate('items.product'),
+            session
+        );
         if (!cart || cart.items.length === 0) {
             throw new Error("gio hang rong");
         }
 
         let reservationItems = [];
         let amount = 0;
+        const saveOpts = session ? { session } : {};
         for (const item of cart.items) {
-            let inventory = await inventoryModel.findOne({ product: item.product._id }).session(session);
+            let inventory = await withSession(
+                inventoryModel.findOne({ product: item.product._id }),
+                session
+            );
             if (!inventory) throw new Error("khong tim thay ton kho");
             let available = inventory.stock - inventory.reserved;
             if (available < item.quantity) throw new Error(`khong du hang cho ${item.product.title}`);
 
             inventory.reserved += item.quantity;
-            await inventory.save({ session });
+            await inventory.save(saveOpts);
 
             let subtotal = item.quantity * item.product.price;
             amount += subtotal;
@@ -71,18 +84,18 @@ router.post("/", CheckLogin, async function (req, res, next) {
             amount: amount,
             expiredIn: new Date(Date.now() + 15 * 60 * 1000)
         });
-        reservation = await reservation.save({ session });
+        reservation = await reservation.save(saveOpts);
 
         cart.items = [];
-        await cart.save({ session });
+        await cart.save(saveOpts);
 
-        await session.commitTransaction();
-        await session.endSession();
+        if (useTx) await session.commitTransaction();
         res.send(reservation);
     } catch (error) {
-        await session.abortTransaction();
-        await session.endSession();
+        if (useTx && session) await session.abortTransaction().catch(function () {});
         res.status(400).send({ message: error.message });
+    } finally {
+        if (session) await session.endSession().catch(function () {});
     }
 });
 
@@ -110,10 +123,16 @@ router.put("/:id/status", CheckLogin, checkRole("ADMIN", "MODERATOR"), async fun
 });
 
 router.post("/:id/cancel", CheckLogin, async function (req, res, next) {
-    let session = await mongoose.startSession();
-    session.startTransaction();
+    let session = null;
+    let useTx = false;
     try {
-        let reservation = await reservationModel.findById(req.params.id).session(session);
+        useTx = await supportsMongoTransactions();
+        if (useTx) {
+            session = await mongoose.startSession();
+            session.startTransaction();
+        }
+        const saveOpts = session ? { session } : {};
+        let reservation = await withSession(reservationModel.findById(req.params.id), session);
         if (!reservation) throw new Error("reservation not found");
 
         let isOwner = reservation.user.toString() === req.user._id.toString();
@@ -122,23 +141,26 @@ router.post("/:id/cancel", CheckLogin, async function (req, res, next) {
         if (reservation.status !== "actived") throw new Error("chi huy duoc reservation dang actived");
 
         for (const item of reservation.items) {
-            let inventory = await inventoryModel.findOne({ product: item.product }).session(session);
+            let inventory = await withSession(
+                inventoryModel.findOne({ product: item.product }),
+                session
+            );
             if (inventory) {
                 inventory.reserved = Math.max(0, inventory.reserved - item.quantity);
-                await inventory.save({ session });
+                await inventory.save(saveOpts);
             }
         }
 
         reservation.status = "cancelled";
-        await reservation.save({ session });
+        await reservation.save(saveOpts);
 
-        await session.commitTransaction();
-        await session.endSession();
+        if (useTx) await session.commitTransaction();
         res.send(reservation);
     } catch (error) {
-        await session.abortTransaction();
-        await session.endSession();
+        if (useTx && session) await session.abortTransaction().catch(function () {});
         res.status(400).send({ message: error.message });
+    } finally {
+        if (session) await session.endSession().catch(function () {});
     }
 });
 

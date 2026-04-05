@@ -9,6 +9,7 @@ let productsModel = require('../schemas/products')
 let inventoryModel = require('../schemas/inventories')
 let mongoose = require('mongoose')
 let { slugFromInput, cellValueToPlainString } = require('../utils/slugFromInput')
+let { supportsMongoTransactions } = require('../utils/mongoSession')
 
 router.post('/one_image', uploadImage.single('file'), function (req, res, next) {
     if (!req.file) {
@@ -68,6 +69,7 @@ router.post('/excel', uploadExcel.single('file'), async function (req, res, next
         let products = await productsModel.find({})
         let getTitle = products.map(p => p.title)
         let getSku = products.map(p => p.sku)
+        let useTx = await supportsMongoTransactions()
 
         for (let index = 2; index <= worksheet.rowCount; index++) {
             let errorsInRow = []
@@ -108,9 +110,13 @@ router.post('/excel', uploadExcel.single('file'), async function (req, res, next
                 continue;
             }// 
 
-            let session = await mongoose.startSession();
-            session.startTransaction()
+            let session = null
             try {
+                if (useTx) {
+                    session = await mongoose.startSession();
+                    session.startTransaction();
+                }
+                const saveOpts = session ? { session } : {};
                 let newProduct = new productsModel({
                     sku: sku,
                     title: title,
@@ -119,15 +125,14 @@ router.post('/excel', uploadExcel.single('file'), async function (req, res, next
                     description: title,
                     category: categoriesMap.get(category)
                 });
-                newProduct = await newProduct.save({ session });
+                newProduct = await newProduct.save(saveOpts);
                 let newInventory = new inventoryModel({
                     product: newProduct._id,
                     stock: stock
                 })
-                newInventory = await newInventory.save({ session });
+                newInventory = await newInventory.save(saveOpts);
                 newInventory = await newInventory.populate('product')
-                await session.commitTransaction();
-                await session.endSession()
+                if (useTx) await session.commitTransaction();
                 getTitle.push(title);
                 getSku.push(sku)
                 result.push({
@@ -135,12 +140,13 @@ router.post('/excel', uploadExcel.single('file'), async function (req, res, next
                     data: newInventory
                 })
             } catch (error) {
-                await session.abortTransaction();
-                await session.endSession()
+                if (useTx && session) await session.abortTransaction().catch(function () {});
                 result.push({
                     success: false,
                     data: error.message
                 })
+            } finally {
+                if (session) await session.endSession().catch(function () {});
             }
 
         }
