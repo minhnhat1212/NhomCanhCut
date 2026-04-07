@@ -200,6 +200,7 @@
     .card-dot.prod { background: #10b981; color: #10b981; }
     .card-dot.res { background: #f59e0b; color: #f59e0b; }
     .card-dot.up { background: #ec4899; color: #ec4899; }
+    .card-dot.cart { background: #f97316; color: #f97316; }
     .card-dot.out { background: #8b5cf6; color: #8b5cf6; }
 
     .card h2 {
@@ -424,6 +425,23 @@
             </div>
           </section>
 
+          <section class="card" aria-labelledby="h-cart">
+            <div class="card-head">
+              <span class="card-dot cart" aria-hidden="true"></span>
+              <div>
+                <h2 id="h-cart">Cart 🛒</h2>
+                <p class="hint">Thêm / bớt sản phẩm vào giỏ hàng trước khi tạo reservation.</p>
+              </div>
+            </div>
+            <div class="row">
+              <input id="cartProductId" placeholder="Product ID (ObjectId)" />
+              <input id="cartQty" placeholder="Số lượng" type="number" min="1" value="1" style="max-width:110px" />
+              <button type="button" class="btn-primary" onclick="cartAdd()">➕ Thêm vào giỏ</button>
+              <button type="button" onclick="cartRemove()">➖ Bớt / Xóa</button>
+              <button type="button" onclick="cartView()" class="full">🛒 Xem giỏ hàng</button>
+            </div>
+          </section>
+
           <section class="card" aria-labelledby="h-res">
             <div class="card-head">
               <span class="card-dot res" aria-hidden="true"></span>
@@ -573,6 +591,32 @@
 
     async function listProducts() {
       log(await request(`${base}/products`));
+    }
+
+    async function cartView() {
+      log(await request(`${base}/carts`));
+    }
+
+    async function cartAdd() {
+      const product = document.getElementById('cartProductId').value.trim();
+      const quantity = parseInt(document.getElementById('cartQty').value) || 1;
+      if (!product) return log('⚠️ Nhập Product ID trước!');
+      log(await request(`${base}/carts/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, quantity })
+      }));
+    }
+
+    async function cartRemove() {
+      const product = document.getElementById('cartProductId').value.trim();
+      const quantity = parseInt(document.getElementById('cartQty').value) || 1;
+      if (!product) return log('⚠️ Nhập Product ID trước!');
+      log(await request(`${base}/carts/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, quantity })
+      }));
     }
 
     async function createReservation() {
